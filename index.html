@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CENOP - Policía Nacional de Colombia</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Audiowide&family=Black+Ops+One&family=Michroma&family=Orbitron:wght@400..900&family=Press+Start+2P&family=Rajdhani:wght@400;500;600;700&family=Syncopate:wght@400;700&family=VT323&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --neon-cyan:#00fff7;
+    --neon-magenta:#ff00e6;
+    --neon-purple:#7c4dff;
+    --neon-green:#00ff9d;
+    --bg-dark:#05020a;
+  }
+  *{box-sizing:border-box;}
+  html,body{
+    margin:0;padding:0;height:100%;width:100%;
+    background:var(--bg-dark);
+    font-family:'Rajdhani',sans-serif;
+    color:#e8e8ff;
+    overflow:hidden;
+  }
+
+  /* ===== FONDO DE PARTICULAS ===== */
+  #particles{
+    position:fixed;inset:0;z-index:0;
+    background:radial-gradient(circle at 50% 30%, #130a24 0%, #05020a 70%);
+  }
+  #grid-overlay{
+    position:fixed;inset:0;z-index:1;pointer-events:none;
+    background-image:
+      linear-gradient(rgba(0,255,247,0.06) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,255,247,0.06) 1px, transparent 1px);
+    background-size:40px 40px;
+    mask-image:radial-gradient(circle at 50% 40%, black 10%, transparent 75%);
+  }
+
+  /* ===== TOPBAR ===== */
+  #topbar{
+    position:fixed;top:0;left:0;right:0;z-index:30;
+    display:flex;justify-content:space-between;align-items:center;
+    padding:12px 20px;
+    background:rgba(5,2,10,0.55);
+    backdrop-filter:blur(8px);
+    border-bottom:1px solid rgba(0,255,247,0.4);
+    transition:opacity .3s, transform .3s;
+  }
+  #topbar .logo{
+    font-family:'Orbitron',sans-serif;
+    font-weight:700;letter-spacing:2px;color:#fff;
+    text-shadow:0 0 6px var(--neon-cyan),0 0 14px var(--neon-magenta);
+  }
+  #toggleToolbox{
+    background:linear-gradient(90deg,var(--neon-cyan),var(--neon-magenta));
+    border:none;color:#05020a;font-weight:700;
+    padding:8px 16px;border-radius:6px;cursor:pointer;
+    font-family:'Rajdhani',sans-serif;letter-spacing:1px;
+    box-shadow:0 0 12px rgba(0,255,247,0.6);
+    transition:.2s;
+  }
+  #toggleToolbox:hover{transform:scale(1.05);}
+
+  /* ===== NAVEGACION ENTRE PAGINAS ===== */
+  .nav-arrow{
+    position:fixed;top:50%;transform:translateY(-50%);
+    font-size:2.4rem;color:var(--neon-cyan);
+    text-shadow:0 0 8px var(--neon-cyan),0 0 20px var(--neon-magenta);
+    cursor:pointer;z-index:25;opacity:0.55;
+    transition:.25s;user-select:none;
+  }
+  .nav-arrow:hover{opacity:1;transform:translateY(-50%) scale(1.2);}
+  .nav-arrow.left{left:14px;}
+  .nav-arrow.right{right:14px;}
+
+  #dots{
+    position:fixed;bottom:14px;left:50%;transform:translateX(-50%);
+    display:flex;gap:10px;z-index:25;transition:opacity .3s;
+  }
+  .dot{
+    width:12px;height:12px;border-radius:50%;
+    border:2px solid var(--neon-cyan);cursor:pointer;
+    transition:.2s;background:transparent;
+  }
+  .dot.active{
+    background:var(--neon-magenta);
+    box-shadow:0 0 10px var(--neon-magenta),0 0 20px var(--neon-cyan);
+  }
+
+  /* ===== PAGINAS ===== */
+  #pagesWrapper{
+    position:relative;z-index:5;
+    display:flex;height:100vh;width:100vw;
+    transition:transform .7s cubic-bezier(.77,0,.18,1);
+  }
+  .page{
+    min-width:100vw;height:100vh;position:relative;
+    overflow:hidden;transition:background .5s;
+    background:rgba(8,0,20,0.88);
+  }
+
+  .main-title-block{
+    position:absolute;inset:0;display:flex;flex-direction:column;
+    align-items:center;justify-content:center;pointer-events:none;
+  }
+  @keyframes flicker{
+    0%,19%,21%,23%,25%,54%,56%,100%{opacity:1;}
+    20%,24%,55%{opacity:0.5;}
+  }
+  .main-title{
+    font-family:'Orbitron',sans-serif;font-size:5.5rem;margin:0;
+    color:#fff;letter-spacing:6px;
+    text-shadow:0 0 10px var(--neon-cyan),0 0 25px var(--neon-cyan),0 0 55px var(--neon-magenta);
+    animation:flicker 5s infinite;
+  }
+  .main-subtitle{
+    font-family:'Syncopate',sans-serif;font-size:1.6rem;margin-top:10px;
+    color:var(--neon-green);letter-spacing:4px;
+    text-shadow:0 0 8px var(--neon-green),0 0 18px var(--neon-purple);
+  }
+
+  /* ===== ELEMENTOS ARRASTRABLES ===== */
+  .element-wrapper{
+    position:absolute;min-width:60px;z-index:6;
+  }
+  .element-handle{
+    display:none;justify-content:space-between;align-items:center;
+    cursor:grab;font-size:11px;padding:3px 8px;
+    background:linear-gradient(90deg,var(--neon-cyan),var(--neon-magenta));
+    color:#05020a;font-weight:700;border-radius:6px 6px 0 0;
+  }
+  .element-wrapper:hover .element-handle,
+  .element-wrapper.selected .element-handle{display:flex;}
+  .del-btn{cursor:pointer;padding:0 4px;}
+  .del-btn:hover{color:#fff;}
+
+  @keyframes neonCycle{
+    0%{box-shadow:0 0 8px var(--neon-cyan),0 0 18px var(--neon-cyan);border-color:var(--neon-cyan);}
+    33%{box-shadow:0 0 8px var(--neon-magenta),0 0 18px var(--neon-magenta);border-color:var(--neon-magenta);}
+    66%{box-shadow:0 0 8px var(--neon-purple),0 0 18px var(--neon-purple);border-color:var(--neon-purple);}
+    100%{box-shadow:0 0 8px var(--neon-cyan),0 0 18px var(--neon-cyan);border-color:var(--neon-cyan);}
+  }
+  .element-content{
+    border:2px solid var(--neon-cyan);
+    border-radius:0 6px 6px 6px;
+    padding:10px 14px;
+    background:rgba(5,2,15,0.5);
+    animation:neonCycle 5s infinite linear;
+    outline:none;
+    min-width:40px;
+  }
+  .element-wrapper.selected .element-content{
+    outline:2px dashed #fff;
+  }
+  .media-content{display:block;max-width:90vw;}
+  .resize-handle{
+    position:absolute;width:16px;height:16px;right:-7px;bottom:-7px;
+    background:var(--neon-cyan);border-radius:50%;cursor:se-resize;
+    box-shadow:0 0 10px var(--neon-cyan);display:none;
+  }
+  .element-wrapper.selected .resize-handle{display:block;}
+
+  .text-content.title{font-size:3rem;font-family:'Orbitron',sans-serif;}
+  .text-content.subtitle{font-size:2rem;font-family:'Syncopate',sans-serif;}
+  .text-content.paragraph{font-size:1.2rem;font-family:'Rajdhani',sans-serif;}
+  .text-content.date{font-size:1.1rem;font-family:'VT323',monospace;color:var(--neon-green);}
+  .text-content.quote{font-size:1.3rem;font-family:'Michroma',sans-serif;font-style:italic;}
+
+  /* ===== TOOLBOX ===== */
+  #toolbox{
+    position:fixed;top:0;right:0;height:100vh;width:360px;
+    background:rgba(8,3,18,0.92);backdrop-filter:blur(10px);
+    border-left:2px solid var(--neon-magenta);
+    box-shadow:-5px 0 25px rgba(255,0,230,0.3);
+    transform:translateX(100%);transition:transform .4s ease;
+    z-index:40;overflow-y:auto;padding:70px 18px 30px;
+  }
+  #toolbox.open{transform:translateX(0);}
+  #toolbox::-webkit-scrollbar{width:6px;}
+  #toolbox::-webkit-scrollbar-thumb{background:var(--neon-cyan);border-radius:3px;}
+
+  .tabs{display:flex;gap:6px;margin-bottom:18px;flex-wrap:wrap;}
+  .tab-btn{
+    flex:1;min-width:70px;background:transparent;
+    border:1px solid var(--neon-cyan);color:var(--neon-cyan);
+    padding:8px 4px;border-radius:6px;cursor:pointer;font-size:.8rem;
+    font-family:'Rajdhani',sans-serif;letter-spacing:1px;transition:.2s;
+  }
+  .tab-btn.active,.tab-btn:hover{
+    background:var(--neon-cyan);color:#05020a;font-weight:700;
+    box-shadow:0 0 12px var(--neon-cyan);
+  }
+  .tab-panel{display:none;}
+  .tab-panel.active{display:block;animation:fadeIn .3s;}
+  @keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
+
+  .tool-section h3{
+    font-family:'Orbitron',sans-serif;font-size:.95rem;
+    color:#fff;text-shadow:0 0 6px var(--neon-magenta);
+    margin:18px 0 10px;letter-spacing:1px;
+  }
+
+  input[type=text], textarea, input[type=color]{
+    width:100%;background:rgba(0,0,0,0.4);
+    border:1px solid var(--neon-cyan);color:#fff;
+    padding:8px;border-radius:6px;margin-bottom:8px;
+    font-family:'Rajdhani',sans-serif;
+  }
+  textarea{resize:vertical;min-height:50px;}
+
+  button.cyber-btn{
+    width:100%;padding:9px;margin-bottom:6px;
+    background:linear-gradient(90deg,var(--neon-purple),var(--neon-magenta));
+    border:none;color:#fff;border-radius:6px;cursor:pointer;
+    font-weight:700;letter-spacing:1px;transition:.2s;
+  }
+  button.cyber-btn:hover{filter:brightness(1.3);box-shadow:0 0 14px var(--neon-magenta);}
+
+  .carousel{display:flex;align-items:center;gap:6px;margin-bottom:10px;}
+  .car-btn{
+    background:transparent;border:1px solid var(--neon-cyan);color:var(--neon-cyan);
+    border-radius:50%;width:30px;height:30px;cursor:pointer;flex-shrink:0;
+  }
+  .car-btn:hover{box-shadow:0 0 10px var(--neon-cyan);}
+  .car-track{
+    display:flex;gap:12px;overflow-x:auto;scroll-behavior:smooth;
+    scrollbar-width:none;padding:4px;
+  }
+  .car-track::-webkit-scrollbar{display:none;}
+  .car-slide{
+    min-width:230px;border:1px solid var(--neon-purple);border-radius:8px;
+    padding:10px;background:rgba(124,77,255,0.08);
+    animation:neonCycle 6s infinite linear;
+  }
+  .car-slide label{font-size:.75rem;color:var(--neon-green);display:block;margin-bottom:4px;}
+
+  .font-btn{
+    min-width:150px;border:1px solid var(--neon-cyan);color:#fff;
+    background:rgba(0,255,247,0.07);border-radius:8px;padding:14px 10px;
+    cursor:pointer;text-align:center;font-size:1rem;flex-shrink:0;
+  }
+  .font-btn.active{
+    background:var(--neon-cyan);color:#05020a;box-shadow:0 0 16px var(--neon-cyan);
+  }
+
+  input[type=range]{width:100%;accent-color:var(--neon-magenta);margin-bottom:8px;}
+  .slider-group{display:none;}
+  .slider-group label{font-size:.8rem;color:var(--neon-cyan);}
+
+  .upload-row{display:flex;gap:8px;}
+  .upload-row button{flex:1;}
+  input[type=file]{display:none;}
+
+  /* ====================================================== */
+  /* ============  MODO PRESENTACIÓN (NUEVO)  ============ */
+  /* ====================================================== */
+  body.presentation-mode #topbar{
+    opacity:0;
+    pointer-events:none;
+    transform:translateY(-100%);
+  }
+  body.presentation-mode #toolbox{
+    display:none !important;
+  }
+  body.presentation-mode .element-handle{
+    display:none !important;
+  }
+  body.presentation-mode .resize-handle{
+    display:none !important;
+  }
+  body.presentation-mode .element-wrapper.selected .element-content{
+    outline:none !important;
+  }
+  body.presentation-mode .nav-arrow{
+    opacity:0.12;
+  }
+  body.presentation-mode .nav-arrow:hover{
+    opacity:0.5;
+  }
+  body.presentation-mode #dots{
+    opacity:0.25;
+  }
+  body.presentation-mode #dots:hover{
+    opacity:0.9;
+  }
+  body.presentation-mode .element-content{
+    cursor:default !important;
+  }
+
+  /* Botón discreto para alternar modo */
+  #modeToggle{
+    position:fixed;
+    bottom:14px;left:14px;
+    width:26px;height:26px;
+    border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    font-size:13px;
+    background:rgba(0,255,247,0.08);
+    border:1px solid rgba(0,255,247,0.25);
+    color:var(--neon-cyan);
+    cursor:pointer;
+    z-index:999;
+    opacity:0.18;
+    transition:all .25s;
+    user-select:none;
+  }
+  #modeToggle:hover{
+    opacity:1;
+    box-shadow:0 0 14px var(--neon-cyan);
+    transform:scale(1.15);
+  }
+  #modeHint{
+    position:fixed;bottom:16px;left:48px;
+    font-size:.7rem;color:var(--neon-cyan);
+    background:rgba(5,2,10,0.7);padding:4px 10px;border-radius:6px;
+    opacity:0;pointer-events:none;transition:opacity .25s;
+    white-space:nowrap;z-index:999;
+  }
+  #modeToggle:hover + #modeHint{opacity:1;}
+</style>
+</head>
+<body class="presentation-mode">
+
+<canvas id="particles"></canvas>
+<div id="grid-overlay"></div>
+
+<header id="topbar">
+  <div class="logo">⚡ CENOP</div>
+  <button id="toggleToolbox">🛠 HERRAMIENTAS</button>
+</header>
+
+<div class="nav-arrow left" id="arrowLeft">&#10094;</div>
+<div class="nav-arrow right" id="arrowRight">&#10095;</div>
+<div id="dots"></div>
+
+<!-- Botón discreto modo edición/presentación -->
+<div id="modeToggle" title="Modo edición (Ctrl+E)">🔒</div>
+<div id="modeHint">Ctrl+E: Modo Edición</div>
+
+<main id="pagesWrapper">
+  <section class="page" id="page-0">
+    <div class="main-title-block">
+      <h1 class="main-title">CENOP</h1>
+      <h2 class="main-subtitle">POLICÍA NACIONAL DE COLOMBIA</h2>
+    </div>
+  </section>
+</main>
+
+<aside id="toolbox">
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="tab-texto">Texto</button>
+    <button class="tab-btn" data-tab="tab-media">Multimedia</button>
+    <button class="tab-btn" data-tab="tab-fuentes">Fuentes</button>
+    <button class="tab-btn" data-tab="tab-diseno">Diseño</button>
+  </div>
+
+  <!-- TAB TEXTO -->
+  <div class="tab-panel active" id="tab-texto">
+    <h3>📝 Insertar Texto (carrusel)</h3>
+    <div class="carousel">
+      <button class="car-btn" onclick="document.getElementById('textCarTrack').scrollBy({left:-250,behavior:'smooth'})">&#10094;</button>
+      <div class="car-track" id="textCarTrack">
+        <div class="car-slide">
+          <label>TÍTULO</label>
+          <input type="text" id="inputTitulo" placeholder="Escribe un título...">
+          <button class="cyber-btn" onclick="insertText('inputTitulo','title')">Agregar</button>
+        </div>
+        <div class="car-slide">
+          <label>SUBTÍTULO</label>
+          <input type="text" id="inputSubtitulo" placeholder="Escribe un subtítulo...">
+          <button class="cyber-btn" onclick="insertText('inputSubtitulo','subtitle')">Agregar</button>
+        </div>
+        <div class="car-slide">
+          <label>PÁRRAFO</label>
+          <textarea id="inputParrafo" placeholder="Escribe un texto..."></textarea>
+          <button class="cyber-btn" onclick="insertText('inputParrafo','paragraph')">Agregar</button>
+        </div>
+        <div class="car-slide">
+          <label>FECHA</label>
+          <input type="text" id="inputFecha" placeholder="DD/MM/AAAA">
+          <button class="cyber-btn" onclick="insertText('inputFecha','date')">Agregar</button>
+        </div>
+        <div class="car-slide">
+          <label>NOTA / CITA</label>
+          <input type="text" id="inputCita" placeholder="Escribe una nota...">
+          <button class="cyber-btn" onclick="insertText('inputCita','quote')">Agregar</button>
+        </div>
+      </div>
+      <button class="car-btn" onclick="document.getElementById('textCarTrack').scrollBy({left:250,behavior:'smooth'})">&#10095;</button>
+    </div>
+
+    <div class="tool-section slider-group" id="fontSizeGroup">
+      <label>Tamaño del texto seleccionado</label>
+      <input type="range" id="fontSizeSlider" min="10" max="150" value="30">
+    </div>
+  </div>
+
+  <!-- TAB MULTIMEDIA -->
+  <div class="tab-panel" id="tab-media">
+    <h3>🖼 Subir Archivos</h3>
+    <div class="upload-row">
+      <button class="cyber-btn" onclick="document.getElementById('imgInput').click()">📷 Imagen</button>
+      <button class="cyber-btn" onclick="document.getElementById('vidInput').click()">🎬 Video</button>
+    </div>
+    <input type="file" id="imgInput" accept=".jpg,.jpeg,.gif,image/jpeg,image/gif">
+    <input type="file" id="vidInput" accept="video/*">
+
+    <div class="tool-section slider-group" id="imgSizeGroup">
+      <label>Tamaño de la imagen/video seleccionado</label>
+      <input type="range" id="sizeSlider" min="50" max="900" value="300">
+    </div>
+  </div>
+
+  <!-- TAB FUENTES -->
+  <div class="tab-panel" id="tab-fuentes">
+    <h3>🔤 Tipos de Letra Cyberpunk</h3>
+    <div class="carousel">
+      <button class="car-btn" onclick="document.getElementById('fontTrack').scrollBy({left:-200,behavior:'smooth'})">&#10094;</button>
+      <div class="car-track" id="fontTrack">
+        <button class="font-btn active" style="font-family:'Orbitron'" data-font="Orbitron, sans-serif">Orbitron</button>
+        <button class="font-btn" style="font-family:'Audiowide'" data-font="Audiowide, sans-serif">Audiowide</button>
+        <button class="font-btn" style="font-family:'Syncopate'" data-font="Syncopate, sans-serif">Syncopate</button>
+        <button class="font-btn" style="font-family:'Black Ops One'" data-font="'Black Ops One', sans-serif">Black Ops One</button>
+        <button class="font-btn" style="font-family:'Press Start 2P'" data-font="'Press Start 2P', monospace">Press Start 2P</button>
+        <button class="font-btn" style="font-family:'VT323'" data-font="VT323, monospace">VT323</button>
+        <button class="font-btn" style="font-family:'Rajdhani'" data-font="Rajdhani, sans-serif">Rajdhani</button>
+        <button class="font-btn" style="font-family:'Michroma'" data-font="Michroma, sans-serif">Michroma</button>
+      </div>
+      <button class="car-btn" onclick="document.getElementById('fontTrack').scrollBy({left:200,behavior:'smooth'})">&#10095;</button>
+    </div>
+    <p style="font-size:.8rem;color:#aaa;">Selecciona una fuente y luego haz clic en un texto para aplicarla, o elígela antes de insertar uno nuevo.</p>
+  </div>
+
+  <!-- TAB DISEÑO -->
+  <div class="tab-panel" id="tab-diseno">
+    <h3>🎨 Color de la Página</h3>
+    <input type="color" id="pageColorPicker" value="#08001a">
+
+    <h3>📄 Páginas</h3>
+    <button class="cyber-btn" id="addPageBtn">+ Nueva Página</button>
+    <button class="cyber-btn" id="delPageBtn" style="background:linear-gradient(90deg,#aa0033,#550022)">🗑 Eliminar Página Actual</button>
+
+    <h3>🔐 Modo</h3>
+    <button class="cyber-btn" id="goPresentationBtn">👁 Entrar a Modo Presentación</button>
+
+    <p style="font-size:.75rem;color:#888;margin-top:14px;">
+      Navega entre páginas con la rueda del mouse, las flechas laterales o los puntos inferiores.<br><br>
+      Presiona <b>Ctrl + E</b> en cualquier momento para alternar entre Modo Edición y Modo Presentación.
+    </p>
+  </div>
+</aside>
+
+<script>
+/* ============ PARTICULAS DE FONDO ============ */
+const canvas=document.getElementById('particles');
+const ctx=canvas.getContext('2d');
+function resizeCanvas(){canvas.width=innerWidth;canvas.height=innerHeight;}
+window.addEventListener('resize',resizeCanvas);resizeCanvas();
+
+const colors=['#00fff7','#ff00e6','#7c4dff','#00ff9d'];
+let particles=[];
+for(let i=0;i<90;i++){
+  particles.push({
+    x:Math.random()*canvas.width,
+    y:Math.random()*canvas.height,
+    r:Math.random()*2+1,
+    dx:(Math.random()-0.5)*0.4,
+    dy:(Math.random()-0.5)*0.4,
+    c:colors[Math.floor(Math.random()*colors.length)]
+  });
+}
+function animateParticles(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  particles.forEach(p=>{
+    p.x+=p.dx;p.y+=p.dy;
+    if(p.x<0||p.x>canvas.width)p.dx*=-1;
+    if(p.y<0||p.y>canvas.height)p.dy*=-1;
+    ctx.beginPath();
+    ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+    ctx.fillStyle=p.c;
+    ctx.shadowBlur=8;ctx.shadowColor=p.c;
+    ctx.fill();
+  });
+  for(let i=0;i<particles.length;i++){
+    for(let j=i+1;j<particles.length;j++){
+      const dx=particles[i].x-particles[j].x;
+      const dy=particles[i].y-particles[j].y;
+      const dist=Math.sqrt(dx*dx+dy*dy);
+      if(dist<110){
+        ctx.beginPath();
+        ctx.strokeStyle='rgba(0,255,247,'+(1-dist/110)*0.2+')';
+        ctx.lineWidth=1;
+        ctx.moveTo(particles[i].x,particles[i].y);
+        ctx.lineTo(particles[j].x,particles[j].y);
+        ctx.stroke();
+      }
+    }
+  }
+  requestAnimationFrame(animateParticles);
+}
+animateParticles();
+
+/* ============ ESTADO GLOBAL ============ */
+let pages=[document.getElementById('page-0')];
+let currentPage=0;
+let selected=null;
+let activeFont="Orbitron, sans-serif";
+let scrollLock=false;
+let editMode=false; // Inicia en modo presentación
+
+pages[0].dataset.color="#08001a";
+pages[0].addEventListener('click',e=>{
+  if(e.target===pages[0]){deselect();}
+});
+
+function deselect(){
+  if(selected){selected.classList.remove('selected');selected=null;}
+  document.getElementById('fontSizeGroup').style.display='none';
+  document.getElementById('imgSizeGroup').style.display='none';
+}
+
+/* ============ MODO EDICIÓN / PRESENTACIÓN ============ */
+function setEditMode(val){
+  editMode=val;
+  document.body.classList.toggle('presentation-mode',!val);
+  document.getElementById('modeToggle').textContent = val ? '🔓' : '🔒';
+  document.getElementById('modeToggle').title = val ? 'Modo presentación (Ctrl+E)' : 'Modo edición (Ctrl+E)';
+  document.getElementById('modeHint').textContent = val ? 'Ctrl+E: Modo Presentación' : 'Ctrl+E: Modo Edición';
+
+  // Bloquear/desbloquear edición de textos
+  document.querySelectorAll('.text-content').forEach(el=>{
+    el.contentEditable = val ? 'true' : 'false';
+  });
+
+  if(!val){
+    deselect();
+    document.getElementById('toolbox').classList.remove('open');
+  }
+}
+document.getElementById('modeToggle').addEventListener('click',()=>setEditMode(!editMode));
+document.getElementById('goPresentationBtn').addEventListener('click',()=>setEditMode(false));
+
+window.addEventListener('keydown',e=>{
+  if(e.ctrlKey && e.key.toLowerCase()==='e'){
+    e.preventDefault();
+    setEditMode(!editMode);
+  }
+});
+
+/* ============ NAVEGACION ENTRE PAGINAS ============ */
+function goTo(index){
+  index=Math.max(0,Math.min(pages.length-1,index));
+  currentPage=index;
+  document.getElementById('pagesWrapper').style.transform=`translateX(-${index*100}vw)`;
+  document.querySelectorAll('.dot').forEach((d,i)=>d.classList.toggle('active',i===index));
+  document.getElementById('pageColorPicker').value=pages[index].dataset.color||'#08001a';
+}
+function renderDots(){
+  const dotsEl=document.getElementById('dots');
+  dotsEl.innerHTML='';
+  pages.forEach((p,i)=>{
+    const d=document.createElement('div');
+    d.className='dot'+(i===currentPage?' active':'');
+    d.addEventListener('click',()=>goTo(i));
+    dotsEl.appendChild(d);
+  });
+}
+renderDots();
+
+document.getElementById('arrowLeft').addEventListener('click',()=>goTo(currentPage-1));
+document.getElementById('arrowRight').addEventListener('click',()=>goTo(currentPage+1));
+
+window.addEventListener('wheel',(e)=>{
+  if(e.target.closest('#toolbox'))return;
+  if(scrollLock)return;
+  scrollLock=true;
+  if(e.deltaY>0||e.deltaX>0){goTo(currentPage+1);}else{goTo(currentPage-1);}
+  setTimeout(()=>scrollLock=false,700);
+});
+
+/* ============ TOOLBOX TOGGLE Y TABS ============ */
+document.getElementById('toggleToolbox').addEventListener('click',()=>{
+  document.getElementById('toolbox').classList.toggle('open');
+});
+document.querySelectorAll('.tab-btn').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById(btn.dataset.tab).classList.add('active');
+  });
+});
+
+/* ============ PAGINAS: AGREGAR / ELIMINAR / COLOR ============ */
+function addPage(color){
+  const section=document.createElement('section');
+  section.className='page';
+  section.style.background=color;
+  section.dataset.color=color;
+  section.addEventListener('click',e=>{if(e.target===section)deselect();});
+  document.getElementById('pagesWrapper').appendChild(section);
+  pages.push(section);
+  renderDots();
+  goTo(pages.length-1);
+}
+document.getElementById('addPageBtn').addEventListener('click',()=>addPage('#08001a'));
+document.getElementById('delPageBtn').addEventListener('click',()=>{
+  if(pages.length<=1){alert('Debe existir al menos una página');return;}
+  pages[currentPage].remove();
+  pages.splice(currentPage,1);
+  renderDots();
+  goTo(Math.max(0,currentPage-1));
+});
+document.getElementById('pageColorPicker').addEventListener('input',e=>{
+  pages[currentPage].style.background=e.target.value;
+  pages[currentPage].dataset.color=e.target.value;
+});
+
+/* ============ CREAR ELEMENTOS DE TEXTO ============ */
+function insertText(inputId,type){
+  const input=document.getElementById(inputId);
+  const val=input.value.trim();
+  if(!val){input.focus();return;}
+  createTextElement(val,type);
+  input.value='';
+}
+function createTextElement(content,type){
+  const page=pages[currentPage];
+  const wrapper=document.createElement('div');
+  wrapper.className='element-wrapper';
+  wrapper.style.left='60px';
+  wrapper.style.top=(60+Math.random()*200)+'px';
+  wrapper.innerHTML=`
+    <div class="element-handle"><span>⋮⋮ mover</span><span class="del-btn">✕</span></div>
+    <div class="element-content text-content ${type}" contenteditable="${editMode}" style="font-family:${activeFont}">${content}</div>
+  `;
+  page.appendChild(wrapper);
+  initWrapper(wrapper,'text');
+  selectElement(wrapper);
+}
+
+/* ============ CREAR IMAGENES / VIDEOS ============ */
+document.getElementById('imgInput').addEventListener('change',function(e){
+  const file=e.target.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=ev=>createMediaElement(ev.target.result,false);
+  reader.readAsDataURL(file);
+  e.target.value='';
+});
+document.getElementById('vidInput').addEventListener('change',function(e){
+  const file=e.target.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=ev=>createMediaElement(ev.target.result,true);
+  reader.readAsDataURL(file);
+  e.target.value='';
+});
+function createMediaElement(src,isVideo){
+  const page=pages[currentPage];
+  const wrapper=document.createElement('div');
+  wrapper.className='element-wrapper';
+  wrapper.style.left='100px';
+  wrapper.style.top=(100+Math.random()*150)+'px';
+  const mediaTag=isVideo
+    ? `<video class="element-content media-content" src="${src}" controls style="width:300px;"></video>`
+    : `<img class="element-content media-content" src="${src}" style="width:300px;">`;
+  wrapper.innerHTML=`
+    <div class="element-handle"><span>⋮⋮ mover</span><span class="del-btn">✕</span></div>
+    ${mediaTag}
+    <div class="resize-handle"></div>
+  `;
+  page.appendChild(wrapper);
+  initWrapper(wrapper,'media');
+  selectElement(wrapper);
+}
+
+/* ============ INTERACTIVIDAD: DRAG / SELECT / DELETE / RESIZE ============ */
+function initWrapper(wrapper,kind){
+  wrapper.dataset.kind=kind;
+
+  wrapper.addEventListener('mousedown',e=>{
+    if(!editMode)return; // Bloqueado en modo presentación
+    if(!e.target.closest('.element-handle')){selectElement(wrapper);}
+  });
+
+  const handle=wrapper.querySelector('.element-handle');
+  handle.addEventListener('mousedown',e=>{
+    if(!editMode)return;
+    if(e.target.classList.contains('del-btn'))return;
+    e.preventDefault();
+    selectElement(wrapper);
+    const startX=e.clientX,startY=e.clientY;
+    const startLeft=wrapper.offsetLeft,startTop=wrapper.offsetTop;
+    function onMove(ev){
+      wrapper.style.left=(startLeft+(ev.clientX-startX))+'px';
+      wrapper.style.top=(startTop+(ev.clientY-startY))+'px';
+    }
+    function onUp(){
+      document.removeEventListener('mousemove',onMove);
+      document.removeEventListener('mouseup',onUp);
+    }
+    document.addEventListener('mousemove',onMove);
+    document.addEventListener('mouseup',onUp);
+  });
+
+  wrapper.querySelector('.del-btn').addEventListener('click',e=>{
+    if(!editMode)return;
+    e.stopPropagation();
+    if(selected===wrapper)selected=null;
+    wrapper.remove();
+  });
+
+  if(kind==='media'){
+    const rh=wrapper.querySelector('.resize-handle');
+    rh.addEventListener('mousedown',e=>{
+      if(!editMode)return;
+      e.preventDefault();e.stopPropagation();
+      const media=wrapper.querySelector('.media-content');
+      const startX=e.clientX;
+      const startWidth=media.offsetWidth;
+      function onMove(ev){
+        const newWidth=Math.max(50,startWidth+(ev.clientX-startX));
+        media.style.width=newWidth+'px';
+        if(wrapper===selected)document.getElementById('sizeSlider').value=newWidth;
+      }
+      function onUp(){
+        document.removeEventListener('mousemove',onMove);
+        document.removeEventListener('mouseup',onUp);
+      }
+      document.addEventListener('mousemove',onMove);
+      document.addEventListener('mouseup',onUp);
+    });
+  }
+}
+
+function selectElement(wrapper){
+  if(!editMode)return;
+  if(selected)selected.classList.remove('selected');
+  selected=wrapper;
+  wrapper.classList.add('selected');
+  const kind=wrapper.dataset.kind;
+  const fontSizeGroup=document.getElementById('fontSizeGroup');
+  const imgSizeGroup=document.getElementById('imgSizeGroup');
+  if(kind==='text'){
+    fontSizeGroup.style.display='block';
+    imgSizeGroup.style.display='none';
+    const content=wrapper.querySelector('.text-content');
+    document.getElementById('fontSizeSlider').value=parseInt(getComputedStyle(content).fontSize);
+  }else{
+    fontSizeGroup.style.display='none';
+    imgSizeGroup.style.display='block';
+    const media=wrapper.querySelector('.media-content');
+    document.getElementById('sizeSlider').value=media.offsetWidth;
+  }
+}
+
+document.getElementById('fontSizeSlider').addEventListener('input',e=>{
+  if(selected&&selected.dataset.kind==='text'){
+    selected.querySelector('.text-content').style.fontSize=e.target.value+'px';
+  }
+});
+document.getElementById('sizeSlider').addEventListener('input',e=>{
+  if(selected&&selected.dataset.kind==='media'){
+    selected.querySelector('.media-content').style.width=e.target.value+'px';
+  }
+});
+
+/* ============ SELECTOR DE FUENTES ============ */
+document.querySelectorAll('.font-btn').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('.font-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    activeFont=btn.dataset.font;
+    if(selected&&selected.dataset.kind==='text'){
+      selected.querySelector('.text-content').style.fontFamily=activeFont;
+    }
+  });
+});
+
+/* Inicializar en modo presentación */
+setEditMode(false);
+</script>
+</body>
+</html>
